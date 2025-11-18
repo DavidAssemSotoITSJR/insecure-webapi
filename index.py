@@ -142,7 +142,7 @@ def Imagen():
 
     try:
         with db.cursor() as cursor:
-            cursor.execute(f'select id_Usuario from AccesoToken where token = "{TKN}"')
+            cursor.execute('select id_Usuario from AccesoToken where token = %s', (TKN,))
             usuario = cursor.fetchone()
             if not usuario:
                 db.close()
@@ -198,7 +198,7 @@ def Descargar():
 
     try:
         with db.cursor() as cursor:
-            cursor.execute(f'select id_Usuario from AccesoToken where token = "{TKN}"')
+            cursor.execute('select id_Usuario from AccesoToken where token = %s', (TKN,))
             usuario = cursor.fetchall()
 
         if not usuario:
@@ -206,7 +206,7 @@ def Descargar():
             return {"R": -3}
 
         with db.cursor() as cursor:
-            cursor.execute('Select name,ruta,id_Usuario from  Imagen where id = '+str(idImagen))
+            cursor.execute('Select name,ruta,id_Usuario from Imagen where id = %s', (idImagen,))
             img = cursor.fetchall()
 
         if not img or img[0][2] != usuario[0][0]:
@@ -223,4 +223,4 @@ def Descargar():
 
 
 if __name__ == '__main__':
-    run(host='0.0.0.0', port=8080, debug=True)
+    run(host='localhost', port=8080, debug=True)
