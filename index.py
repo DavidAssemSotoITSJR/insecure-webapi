@@ -5,6 +5,7 @@ import mysql.connector
 import base64
 import shutil
 import secrets
+from PIL import Image
 from datetime import datetime
 from pathlib import Path
 from bottle import route, run, template, post, request, static_file, get
@@ -143,9 +144,25 @@ def Imagen():
         return {"R": -2}
 
     id_Usuario = usuario[0]
-
-    with open(f'tmp/{id_Usuario}', "wb") as imagen:
+    ext_permitidas = ["jpg", "jpeg", "png", "gif"]
+    ext = request.json["ext"].lower()
+    if ext not in ext_permitidas:
+        db.close()
+        return {"R": -5, "E": "tipo de archivo no permitido"}
+    tmp_path = f"tmp/{id_Usuario}"
+    with open(tmp_path, "wb") as imagen:
         imagen.write(base64.b64decode(request.json['data'].encode()))
+    try:
+        with Image.open(tmp_path) as img:
+            mime_detectado = img.format.lower()
+    except Exception:
+        db.close()
+        Path(tmp_path).unlink()
+        return {"R": -6, "E": "archivo inválido o corrupto"}
+    if mime_detectado not in ["jpeg", "png", "gif"]:
+        db.close()
+        Path(tmp_path).unlink()
+        return {"R": -6, "E": "tipo de imagen no permitido"}
 
     try:
         with db.cursor() as cursor:
@@ -213,4 +230,4 @@ def Descargar():
 
 
 if __name__ == '__main__':
-    run(host='localhost', port=8080, debug=False)
+    run(host='0.0.0.0', port=8080, debug=False)
